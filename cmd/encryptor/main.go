@@ -104,12 +104,24 @@ func main() {
 	outputFile := flag.String("out", "", "Path to the output file")
 	operation := flag.String("op", "encrypt", "Operation to perform: encrypt or decrypt")
 	keyFile := flag.String("key", "", "Path to the RSA key file")
+	keygen := flag.Bool("keygen", false, "Generate RSA keys")
 	flag.Parse()
+	generateKeys()
 
 	// Validate required flags
 	if *inputFile == "" || *outputFile == "" || *keyFile == "" {
 		flag.Usage()
 		os.Exit(1)
+	}
+
+	if *keygen {
+		err := keyutil.GenerateKeys("private.pem", "public.pem")
+		if err != nil {
+			log.Fatalf("failed to generate private.pem : %v", err)
+
+		}
+		fmt.Println("RSA key generated successfully")
+		os.Exit(0)
 	}
 
 	// Read the input file
@@ -148,7 +160,6 @@ func main() {
 		log.Fatalf("Failed to write output file: %v", err)
 	}
 
-	generateKeys()
 	//fmt.Println("successfully generated key")
 	fmt.Println("Operation completed successfully.")
 }
