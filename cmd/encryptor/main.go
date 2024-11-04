@@ -48,6 +48,10 @@
 package main
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"flag"
 	"fmt"
 	"log"
@@ -57,6 +61,42 @@ import (
 	"encDecCli/pkg/fileutil"
 	"encDecCli/pkg/keyutil"
 )
+
+func generateKeys() {
+
+	// generate RSA keys
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		log.Fatalf("failed to open private.pem : %v", err)
+	}
+	privFile, err := os.Create("private.pem")
+	if err != nil {
+		log.Fatalf("failed to open private.pem : %v", err)
+	}
+	defer privFile.Close()
+
+	privBytes := x509.MarshalPKCS1PrivateKey(privateKey)
+	pem.Encode(privFile, &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: privBytes,
+	})
+
+	// Save public key
+	pubFile, err := os.Create("public.pem")
+	if err != nil {
+		log.Fatalf("failed to open public.pem : %v", err)
+	}
+	defer pubFile.Close()
+
+	pubBytes, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		log.Fatalf("failed to marshal public.pem : %v", err)
+	}
+	pem.Encode(pubFile, &pem.Block{
+		Type:  "RSA PUBLIC KEY",
+		Bytes: pubBytes,
+	})
+}
 
 func main() {
 	// Define command-line flags
@@ -108,5 +148,7 @@ func main() {
 		log.Fatalf("Failed to write output file: %v", err)
 	}
 
+	generateKeys()
+	//fmt.Println("successfully generated key")
 	fmt.Println("Operation completed successfully.")
 }
