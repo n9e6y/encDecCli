@@ -1,57 +1,6 @@
-//package main
-//
-//import (
-//    "flag"
-//)
-//
-//func main()
-//    // Define flags
-//	inputFile := flag.String("input", "", "path to input file")
-//	outputFile := flag.String("output", "", "path to output file")
-//	operation := flag.String("operation", "encrypt", "operation to encrypt")
-//	keyFile := flag.String("key", "", "path to key file")
-//	flag.Parse()
-//
-//    // Validate required flags
-//    if *inputFile == "" || *outputFile == "" || *keyFile == "" {
-//        flag.Usage()
-//        os.Exit(1)
-//    }
-//
-//    // Read the input file
-//    data , err := ioutil.ReadFile(*inputFile)
-//    if err != nil {
-//        log.Fatalf("failed to read the input file" , err)}
-//
-//    // Load the RSA key
-//    rsaKey, err := keyutil.LoadRSAKey(*keyFile , *operation)
-//    if err != nil {
-//        log.Fatalf("failed to load the key file", err)}
-//    var result []byte
-//    switch *operation {
-//    case "encrypt":
-//        result, err = encryptor.Encrypt(data, rsaKey)
-//        if err != nil {
-//            log.Fatalf("failed to encrypt", err)}}
-//    case "decrypt":
-//        result, err = decryptor.Decrypt(data, rsaKey)
-//        if err != nil {
-//            log.Fatalf("failed to decrypt", err)}
-//        default:
-//            fmt.Printf("unknown operation %s\n", *operation)
-//            os.Exit(1)
-//
-//}
-//
-//
-
 package main
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"flag"
 	"fmt"
 	"log"
@@ -62,42 +11,6 @@ import (
 	"encDecCli/pkg/keyutil"
 )
 
-func generateKeys() {
-
-	// generate RSA keys
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		log.Fatalf("failed to open private.pem : %v", err)
-	}
-	privFile, err := os.Create("private.pem")
-	if err != nil {
-		log.Fatalf("failed to open private.pem : %v", err)
-	}
-	defer privFile.Close()
-
-	privBytes := x509.MarshalPKCS1PrivateKey(privateKey)
-	pem.Encode(privFile, &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: privBytes,
-	})
-
-	// Save public key
-	pubFile, err := os.Create("public.pem")
-	if err != nil {
-		log.Fatalf("failed to open public.pem : %v", err)
-	}
-	defer pubFile.Close()
-
-	pubBytes, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
-	if err != nil {
-		log.Fatalf("failed to marshal public.pem : %v", err)
-	}
-	pem.Encode(pubFile, &pem.Block{
-		Type:  "RSA PUBLIC KEY",
-		Bytes: pubBytes,
-	})
-}
-
 func main() {
 	// Define command-line flags
 	inputFile := flag.String("in", "", "Path to the input file")
@@ -106,7 +19,6 @@ func main() {
 	keyFile := flag.String("key", "", "Path to the RSA key file")
 	keygen := flag.Bool("keygen", false, "Generate RSA keys")
 	flag.Parse()
-	generateKeys()
 
 	// Validate required flags
 	if *inputFile == "" || *outputFile == "" || *keyFile == "" {
@@ -117,10 +29,9 @@ func main() {
 	if *keygen {
 		err := keyutil.GenerateKeys("private.pem", "public.pem")
 		if err != nil {
-			log.Fatalf("failed to generate private.pem : %v", err)
-
+			log.Fatalf("Key generation failed: %v", err)
 		}
-		fmt.Println("RSA key generated successfully")
+		fmt.Println("RSA keys generated successfully.")
 		os.Exit(0)
 	}
 
